@@ -15,6 +15,9 @@ class Expr:
   def __str__(self):
     raise TypeError("Should not call Expr.__str__()")
 
+  def evaluable(self):
+    return str(self)
+
 
 class LiteralExpr(Expr):
   def __init__(self, value):
@@ -36,6 +39,9 @@ class FactorialExpr(Expr):
     else:
       return str(self.child) + '!'
 
+  def evaluable(self):
+    return 'factorial(round({}))'.format(self.child.evaluable())
+
 
 class SqrtExpr(Expr):
   def __init__(self, expr: Expr):
@@ -48,6 +54,9 @@ class SqrtExpr(Expr):
     else:
       return '√({})'.format(str(self.child))
 
+  def evaluable(self):
+    return '(round({}) ** 0.5)'.format(self.child.evaluable())
+
 
 class BinaryExpr(Expr):
   def __init__(self, oper: str, left: Expr, right: Expr, value):
@@ -56,11 +65,19 @@ class BinaryExpr(Expr):
     self.left = left
     self.right = right
 
-  def __str__(self):
+  def build(self, oper, evaluable):
     format_str = '({})' if isinstance(self.left, BinaryExpr) else '{}'
     format_str += ' {} '
     format_str += '({})' if isinstance(self.right, BinaryExpr) else '{}'
-    return format_str.format(str(self.left), self.oper, str(self.right))
+    left = self.left.evaluable() if evaluable else str(self.left)
+    right = self.right.evaluable() if evaluable else str(self.right)
+    return format_str.format(left, oper, right)
+
+  def __str__(self):
+    return self.build(oper=self.oper, evaluable=False)
+
+  def evaluable(self):
+    return self.build(oper=self.oper, evaluable=True)
 
 
 class AddExpr(BinaryExpr):
@@ -87,9 +104,13 @@ class PowExpr(BinaryExpr):
   def __init__(self, left: Expr, right: Expr):
     BinaryExpr.__init__(self, '^', left, right, left.value ** right.value)
 
+  def evaluable(self):
+    return self.build(oper='**', evaluable=True)
+
 
 class TchislaSolver:
-  value_limit = 10 ** 8
+  value_max_limit = 1e8
+  value_min_limit = 1e-8
   power_limit = 30
   factorial_limit = 15
 
@@ -101,11 +122,13 @@ class TchislaSolver:
     self.seed = seed
 
     self.all_candidates = set()
+    self.current_min = None
+    self.current_max = None
     self.current_candidates = []
     self.generations = []
     self.result = None
 
-  def solve(self, search_depth=10):
+  def solve(self, search_depth=10, trace=False):
     try:
       while search_depth > 0:
         begin, end = 0, len(self.generations) - 1
@@ -114,7 +137,7 @@ class TchislaSolver:
           begin += 1
           end -= 1
         self.add_literal(len(self.generations) + 1)
-        self.next_generation()
+        self.next_generation(trace)
         search_depth -= 1
     except TchislaSolver.Found:
       pass
@@ -133,16 +156,28 @@ class TchislaSolver:
     if expr.value == self.target:
       self.result = expr
       raise TchislaSolver.Found()
-    if expr.value > TchislaSolver.value_limit:
+    if expr.value < TchislaSolver.value_min_limit:
+      return
+    if expr.value > TchislaSolver.value_max_limit:
       return
     if expr.value not in self.all_candidates:
       self.all_candidates.add(expr.value)
       self.current_candidates.append(expr)
+      self.current_min = min(expr.value, self.current_min or expr.value)
+      self.current_max = max(expr.value, self.current_max or expr.value)
       self.add_factorial(expr)
       self.add_square_root(expr)
 
-  def next_generation(self):
+  def next_generation(self, trace):
+    if trace:
+      print('Seed: {}, G{}: size={} min={} max={}'.format(self.seed,
+                                                          len(self.generations) + 1,
+                                                          len(self.current_candidates),
+                                                          self.current_min,
+                                                          self.current_max))
     self.generations.append(self.current_candidates)
+    self.current_min = None
+    self.current_max = None
     self.current_candidates = []
 
   def add_literal(self, repeats: int):
@@ -179,4 +214,3 @@ class TchislaSolver:
   def add_square_root(self, expr: Expr):
     if isinstance(expr.value, int) and expr.value > 0:
       self.add_candidate(SqrtExpr(expr))
-
