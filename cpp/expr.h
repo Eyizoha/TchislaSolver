@@ -4,7 +4,7 @@
 
 class Expr {
 public:
-  static double FLOAT_THRESHOLD;
+  static double DOUBLE_PRECISION;
 
   Expr(int64_t value);
   Expr(double value);

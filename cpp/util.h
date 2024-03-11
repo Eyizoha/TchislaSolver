@@ -104,3 +104,30 @@ public:
 private:
   std::vector<Bucket> buckets;
 };
+
+
+template <size_t NumBuckets = 10>
+class ConcurrentNumericSet {
+public:
+  ConcurrentNumericSet(double precision) : precision_(precision) { }
+
+  bool InsertIfNotExist(int64_t value) {
+    return ints_.InsertIfNotExist(value);
+  }
+
+  bool InsertIfNotExist(double value) {
+    if (precision_ * INT64_MAX > value) {
+      int64_t value_as_int = static_cast<int64_t>(value / precision_);
+      return double_as_ints_.InsertIfNotExist(value_as_int);
+    } else {
+      return oringin_doubles_.InsertIfNotExist(value);
+    }
+  }
+
+private:
+  const double precision_;
+
+  ConcurrentSet<int64_t, NumBuckets> ints_;
+  ConcurrentSet<int64_t, NumBuckets> double_as_ints_;
+  ConcurrentSet<double, NumBuckets> oringin_doubles_;
+};

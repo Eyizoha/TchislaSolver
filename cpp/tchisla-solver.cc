@@ -16,7 +16,8 @@ int64_t TchislaSolver::FACTORIAL_LIMIT = 15;
 size_t TchislaSolver::MUILT_THREADS_THRESHOLD = 10000;
 
 TchislaSolver::TchislaSolver(int64_t target, int64_t seed, std::ostream* trace_os)
-  : target_(target), seed_(seed), trace_os_(trace_os) { }
+  : target_(target), seed_(seed), trace_os_(trace_os),
+    reachable_values_(Expr::DOUBLE_PRECISION) { }
 
 bool TchislaSolver::Solve(int search_depth) {
   vector<thread> extra_threads;
@@ -65,9 +66,9 @@ bool TchislaSolver::UseMultiThread() const {
 
 bool TchislaSolver::AddReachableValueIfNotExist(const Expr& expr) {
   if (expr.IsInt()) {
-    return reachable_ints_.InsertIfNotExist(expr.GetIntUnsafe());
+    return reachable_values_.InsertIfNotExist(expr.GetIntUnsafe());
   } else {
-    return reachable_doubles_.InsertIfNotExist(expr.GetDoubleUnsafe());
+    return reachable_values_.InsertIfNotExist(expr.GetDoubleUnsafe());
   }
 }
 
@@ -140,8 +141,8 @@ bool TchislaSolver::GenerationCreator::AddMultiplication(const Expr* expr1, cons
 }
 
 bool TchislaSolver::GenerationCreator::AddDivision(const Expr* expr1, const Expr* expr2) {
-  if (expr1->GetDouble() < Expr::FLOAT_THRESHOLD ||
-    expr2->GetDouble() < Expr::FLOAT_THRESHOLD) return false;
+  if (expr1->GetDouble() < Expr::DOUBLE_PRECISION ||
+    expr2->GetDouble() < Expr::DOUBLE_PRECISION) return false;
   RETURN_IF_TRUE(AddCandidate(new DivExpr(expr1, expr2)));
   return AddCandidate(new DivExpr(expr2, expr1));
 }

@@ -16,7 +16,7 @@ using std::make_index_sequence;
 using std::string;
 using std::ostringstream;
 
-double Expr::FLOAT_THRESHOLD = 1e-10;
+double Expr::DOUBLE_PRECISION = 1e-10;
 
 template <typename Derived>
 static bool IsInstanceOf(const Expr* ptr) {
@@ -29,7 +29,7 @@ Expr::Expr(int64_t value) : is_integer_(true) {
 
 Expr::Expr(double value) {
   double nearby_int = round(value);
-  is_integer_ = abs(value - nearby_int) < FLOAT_THRESHOLD;
+  is_integer_ = abs(value - nearby_int) < DOUBLE_PRECISION;
   if (is_integer_) {
     value_.i = static_cast<int64_t>(nearby_int);
   } else {
@@ -48,7 +48,7 @@ double Expr::GetDouble() const {
 }
 
 LiteralExpr::LiteralExpr(string&& literal)
-  : Expr(stoll(literal)), literal_(literal) {
+  : Expr(static_cast<int64_t>(stoll(literal))), literal_(literal) {
 }
 
 string LiteralExpr::ToString() const {

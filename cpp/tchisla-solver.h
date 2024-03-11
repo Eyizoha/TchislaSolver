@@ -25,8 +25,7 @@ private:
   const int64_t seed_;
   std::ostream* trace_os_ = nullptr;
 
-  ConcurrentSet<int64_t> reachable_ints_;
-  ConcurrentSet<double> reachable_doubles_;
+  ConcurrentNumericSet<> reachable_values_;
 
   using ExprPtr = std::unique_ptr<const Expr>;
   using GenerationPtr = std::unique_ptr<PartitionedList<ExprPtr>>;
