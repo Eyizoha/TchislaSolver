@@ -9,9 +9,9 @@ using std::vector;
 
 #define RETURN_IF_TRUE(expr) if (expr) return true
 
-double TchislaSolver::VALUE_MAX_LIMIT = 1e8;
+double TchislaSolver::VALUE_MAX_LIMIT = 1e12;
 double TchislaSolver::VALUE_MIN_LIMIT = 1e-8;
-int64_t TchislaSolver::POWER_LIMIT = 30;
+int64_t TchislaSolver::POWER_LIMIT = 40;
 int64_t TchislaSolver::FACTORIAL_LIMIT = 15;
 size_t TchislaSolver::MUILT_THREADS_THRESHOLD = 10000;
 
@@ -149,7 +149,7 @@ bool TchislaSolver::GenerationCreator::AddDivision(const Expr* expr1, const Expr
 
 bool TchislaSolver::GenerationCreator::AddPower(const Expr* expr1, const Expr* expr2) {
   if (expr2->IsInt() && expr2->GetIntUnsafe() <= POWER_LIMIT) {
-    return AddCandidate(new PowExpr(expr1, expr2));
+    RETURN_IF_TRUE(AddCandidate(new PowExpr(expr1, expr2)));
   }
   if (expr1->IsInt() && expr1->GetIntUnsafe() <= POWER_LIMIT) {
     return AddCandidate(new PowExpr(expr2, expr1));
