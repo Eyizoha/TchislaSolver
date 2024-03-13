@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include <deque>
+#include <list>
 #include <mutex>
 #include <shared_mutex>
 #include <unordered_set>
@@ -14,8 +15,8 @@ public:
 
   PartitionedList(size_t num_partitions) : partitions_(num_partitions) { }
 
-  void push_back(size_t part_id, T&& value) {
-    partitions_[part_id].push_back(std::move(value));
+  void push_back(size_t part_id, const T& value) {
+    partitions_[part_id].push_back(value);
   }
 
   class Iterator {
@@ -85,7 +86,7 @@ public:
 
   ConcurrentSet() : buckets(NumBuckets) {}
 
-  bool InsertIfNotExist(const T& key) {
+  inline bool InsertIfNotExist(const T& key) {
     size_t bucket_index = std::hash<T>{}(key) % buckets.size();
     Bucket& bucket = buckets[bucket_index];
 
@@ -111,11 +112,11 @@ class ConcurrentNumericSet {
 public:
   ConcurrentNumericSet(double precision) : precision_(precision) { }
 
-  bool InsertIfNotExist(int64_t value) {
+  inline bool InsertIfNotExist(int64_t value) {
     return ints_.InsertIfNotExist(value);
   }
 
-  bool InsertIfNotExist(double value) {
+  inline bool InsertIfNotExist(double value) {
     if (precision_ * INT64_MAX > value) {
       int64_t value_as_int = static_cast<int64_t>(value / precision_);
       return double_as_ints_.InsertIfNotExist(value_as_int);
@@ -131,3 +132,43 @@ private:
   ConcurrentSet<int64_t, NumBuckets> double_as_ints_;
   ConcurrentSet<double, NumBuckets> oringin_doubles_;
 };
+
+
+template<size_t ChunkSize = 4 * 1024>
+class ObjectPool {
+private:
+  struct Chunk {
+    char data[ChunkSize];
+    size_t next = 0;
+  };
+
+  inline Chunk& GetFreeChunk(size_t require) {
+    if (chunks_.back().next + require > ChunkSize) {
+      chunks_.emplace_back();
+    }
+    return chunks_.back();
+  }
+
+  std::list<Chunk> chunks_;
+  size_t uncommitted_size_;
+
+public:
+  ObjectPool() : uncommitted_size_(0) { chunks_.emplace_back(); }
+
+  ObjectPool(const ObjectPool&) = delete;
+  ObjectPool& operator=(const ObjectPool&) = delete;
+
+  template <class T, class... Valty>
+  T* EmplaceObject(Valty&&... val) {
+    static_assert(sizeof(T) <= ChunkSize, "ChunkSize too small");
+    uncommitted_size_ = sizeof(T);
+    Chunk& chunk = GetFreeChunk(uncommitted_size_);
+    return new (chunk.data + chunk.next) T(std::forward<Valty>(val)...);
+  }
+
+  inline void CommitLastObject() {
+    chunks_.back().next += uncommitted_size_;
+    uncommitted_size_ = 0;
+  }
+};
+
