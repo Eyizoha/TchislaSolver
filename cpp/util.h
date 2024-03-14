@@ -4,7 +4,6 @@
 #include <list>
 #include <mutex>
 #include <shared_mutex>
-#include <unordered_set>
 #include <vector>
 
 
@@ -76,61 +75,78 @@ private:
 };
 
 
-template <typename T, size_t NumBuckets = 10>
-class ConcurrentSet {
+class ConcurrentIntegerSet {
 public:
-  struct Bucket {
-    std::unordered_set<T> data;
-    mutable std::shared_mutex mutex;
-  };
+  ConcurrentIntegerSet() : size_(0), buckets_size_(0), buckets_(nullptr) { Resize(); }
+  ~ConcurrentIntegerSet() { delete[] buckets_; }
 
-  ConcurrentSet() : buckets(NumBuckets) {}
-
-  inline bool InsertIfNotExist(const T& key) {
-    size_t bucket_index = std::hash<T>{}(key) % buckets.size();
-    Bucket& bucket = buckets[bucket_index];
-
-    bool exist = false;
+  inline bool InsertIfNotExist(int64_t value) {
     {
-      std::shared_lock<std::shared_mutex> lock(bucket.mutex);
-      exist = bucket.data.find(key) != bucket.data.end();
+      std::shared_lock<std::shared_mutex> lock(mutex_);
+      auto& bucket = buckets_[value & (buckets_size_ - 1)];
+      for (auto& v : bucket) {
+        if (v == value) return false;
+      }
     }
-    if (exist) return false;
-
-    std::unique_lock<std::shared_mutex> lock(bucket.mutex);
-    bucket.data.insert(key);
+    std::unique_lock<std::shared_mutex> lock(mutex_);
+    auto& bucket = buckets_[value & (buckets_size_ - 1)];
+    bucket.push_back(value);
+    ++size_;
+    if (size_ > buckets_size_) Resize();
     return true;
   }
 
 private:
-  std::vector<Bucket> buckets;
+  size_t size_;
+  size_t buckets_size_;
+  std::vector<int64_t>* buckets_;
+  std::shared_mutex mutex_;
+
+  void Resize() {
+    size_t new_size = 16;
+    while (new_size < size_ * 1.5) {
+      new_size *= 2;
+    }
+    auto new_buckets = new std::vector<int64_t>[new_size];
+    for (size_t i = 0; i < buckets_size_; ++i) {
+      auto& bucket = buckets_[i];
+      for (auto& value : bucket) {
+        new_buckets[value & (new_size - 1)].push_back(value);
+      }
+    }
+    delete[] buckets_;
+    buckets_ = new_buckets;
+    buckets_size_ = new_size;
+  }
 };
 
 
-template <size_t NumBuckets = 10>
+template<size_t NumBuckets>
 class ConcurrentNumericSet {
 public:
   ConcurrentNumericSet(double precision) : precision_(precision) { }
 
   inline bool InsertIfNotExist(int64_t value) {
-    return ints_.InsertIfNotExist(value);
+    return ints_[value % NumBuckets].InsertIfNotExist(value);
   }
 
   inline bool InsertIfNotExist(double value) {
     if (precision_ * INT64_MAX > value) {
       int64_t value_as_int = static_cast<int64_t>(value / precision_);
-      return double_as_ints_.InsertIfNotExist(value_as_int);
+      return double_as_ints_[value_as_int % NumBuckets].InsertIfNotExist(value_as_int);
     } else {
-      return oringin_doubles_.InsertIfNotExist(value);
+      double offset_value = value - precision_ * INT64_MAX;
+      int64_t value_as_int = static_cast<int64_t>(offset_value / precision_);
+      return big_doubles_[value_as_int % NumBuckets].InsertIfNotExist(value_as_int);
     }
   }
 
 private:
   const double precision_;
 
-  ConcurrentSet<int64_t, NumBuckets> ints_;
-  ConcurrentSet<int64_t, NumBuckets> double_as_ints_;
-  ConcurrentSet<double, NumBuckets> oringin_doubles_;
+  ConcurrentIntegerSet ints_[NumBuckets];
+  ConcurrentIntegerSet double_as_ints_[NumBuckets];
+  ConcurrentIntegerSet big_doubles_[NumBuckets];
 };
 
 

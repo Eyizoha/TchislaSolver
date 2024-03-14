@@ -31,7 +31,7 @@ private:
   const int64_t seed_;
   std::ostream* trace_os_ = nullptr;
 
-  ConcurrentNumericSet<> reachable_values_;
+  ConcurrentNumericSet<11> reachable_values_;
 
   std::vector<GenerationCreator> creators_;
 
