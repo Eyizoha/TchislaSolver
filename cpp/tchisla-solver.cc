@@ -109,13 +109,14 @@ void TchislaSolver::EndGeneration() {
 
 bool TchislaSolver::GenerationCreator::AddCandidate(const Expr* expr) {
   RETURN_IF_TRUE(solver.found.load());
-  if (expr->IsInt() && expr->GetInt() == solver.target_) {
+  if (expr->IsInt() && expr->GetIntUnsafe() == solver.target_) {
     solver.found.store(true);
     solver.result_ = expr->ToString();
     return true;
   }
   if (expr->GetDouble() < VALUE_MIN_LIMIT) return false;
   if (expr->GetDouble() > VALUE_MAX_LIMIT) return false;
+  if (!expr->IsInt() && expr->GetDoubleUnsafe() > solver.target_) return false;
   if (solver.AddReachableValueIfNotExist(*expr)) {
     expr_pool.CommitLastObject();
     solver.current_generation_->push_back(part_id, expr);

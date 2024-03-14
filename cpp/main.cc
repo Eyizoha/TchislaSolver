@@ -12,7 +12,7 @@ void PrintUsage() {
     << "Options:\n"
     << "  -h, --help                          Show this help message\n"
     << "  -t, --trace                         Print trace of current search generation and the number of reachable values\n"
-    << "  --precision=double_value            Set precision for double's approximation integer and existence test (default: 1e-10)\n"
+    << "  --precision=double_value            Set precision for double's approximation integer and existence test (default: 1e-8)\n"
     << "  --value-max-limit=double_value      Set maximum limit for reachable values during search, larger values will be ignored (default: 1e12)\n"
     << "  --value-min-limit=double_value      Set minimum limit for reachable values during search, smaller values will be ignored (default: 1e-8)\n"
     << "  --power-limit=int_value             Set the maximum exponent value for power calculations (default: 40)\n"

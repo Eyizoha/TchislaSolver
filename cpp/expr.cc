@@ -16,7 +16,7 @@ using std::make_index_sequence;
 using std::string;
 using std::ostringstream;
 
-double Expr::DOUBLE_PRECISION = 1e-10;
+double Expr::DOUBLE_PRECISION = 1e-8;
 
 template <typename Derived>
 static bool IsInstanceOf(const Expr* ptr) {

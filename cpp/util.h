@@ -92,7 +92,7 @@ public:
     auto& bucket = buckets_[value & (buckets_size_ - 1)];
     bucket.push_back(value);
     ++size_;
-    if (size_ > buckets_size_) Resize();
+    if (buckets_size_ * 1.5 < size_) Resize();
     return true;
   }
 
@@ -104,7 +104,7 @@ private:
 
   void Resize() {
     size_t new_size = 16;
-    while (new_size < size_ * 1.5) {
+    while (new_size < size_ * 3) {
       new_size *= 2;
     }
     auto new_buckets = new std::vector<int64_t>[new_size];
