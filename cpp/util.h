@@ -187,4 +187,3 @@ public:
     uncommitted_size_ = 0;
   }
 };
-

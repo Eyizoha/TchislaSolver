@@ -15,9 +15,9 @@ int64_t TchislaSolver::POWER_LIMIT = 40;
 int64_t TchislaSolver::FACTORIAL_LIMIT = 15;
 size_t TchislaSolver::MUILT_THREADS_THRESHOLD = 10000;
 
-TchislaSolver::TchislaSolver(int64_t target, int64_t seed, std::ostream* trace_os)
-  : target_(target), seed_(seed), trace_os_(trace_os),
-    reachable_values_(Expr::DOUBLE_PRECISION) {
+TchislaSolver::TchislaSolver(int64_t target, int64_t seed, bool deep_search, std::ostream* trace_os)
+  : target_(target), seed_(seed), deep_search_(deep_search), trace_os_(trace_os),
+  reachable_values_(Expr::DOUBLE_PRECISION) {
   expr_pools_.emplace_back(new ObjectPool<OBJ_POOL_SIZE>);
   creators_.emplace_back(*this, 0);
 }
@@ -116,7 +116,7 @@ bool TchislaSolver::GenerationCreator::AddCandidate(const Expr* expr) {
   }
   if (expr->GetDouble() < VALUE_MIN_LIMIT) return false;
   if (expr->GetDouble() > VALUE_MAX_LIMIT) return false;
-  if (!expr->IsInt() && expr->GetDoubleUnsafe() > solver.target_) return false;
+  if (!solver.deep_search_ && !expr->IsInt() && expr->GetDoubleUnsafe() > solver.target_) return false;
   if (solver.AddReachableValueIfNotExist(*expr)) {
     expr_pool.CommitLastObject();
     solver.current_generation_->push_back(part_id, expr);
@@ -158,9 +158,24 @@ bool TchislaSolver::GenerationCreator::AddDivision(const Expr* expr1, const Expr
 bool TchislaSolver::GenerationCreator::AddPower(const Expr* expr1, const Expr* expr2) {
   if (expr2->IsInt() && expr2->GetIntUnsafe() <= POWER_LIMIT) {
     RETURN_IF_TRUE(AddCandidate(expr_pool.EmplaceObject<PowExpr>(expr1, expr2)));
+    RETURN_IF_TRUE(AddMultiSqrtPower(expr1, expr2));
   }
   if (expr1->IsInt() && expr1->GetIntUnsafe() <= POWER_LIMIT) {
-    return AddCandidate(expr_pool.EmplaceObject<PowExpr>(expr2, expr1));
+    RETURN_IF_TRUE(AddCandidate(expr_pool.EmplaceObject<PowExpr>(expr2, expr1)));
+    return AddMultiSqrtPower(expr1, expr2);
+  }
+  return false;
+}
+
+bool TchislaSolver::GenerationCreator::AddMultiSqrtPower(const Expr* expr1, const Expr* expr2) {
+  int64_t power = expr2->GetIntUnsafe();
+  int sqrt_times = 1;
+  while ((power & 1) == 0) {
+    power >>= 1;
+    const Expr* expr = expr_pool.EmplaceObject<MultiSqrtPowExpr>(sqrt_times++, expr1, expr2);
+    if (solver.deep_search_ || expr->IsInt()) {
+      RETURN_IF_TRUE(AddCandidate(expr));
+    }
   }
   return false;
 }
@@ -174,8 +189,15 @@ bool TchislaSolver::GenerationCreator::AddFactorial(const Expr* expr) {
 
 bool TchislaSolver::GenerationCreator::AddSquareRoot(const Expr* expr) {
   if (expr->IsInt() && expr->GetIntUnsafe() > 0) {
-    return AddCandidate(expr_pool.EmplaceObject<SqrtExpr>(expr));
+    if (solver.deep_search_) {
+      RETURN_IF_TRUE(AddCandidate(expr_pool.EmplaceObject<SqrtExpr>(expr)));
+      return AddCandidate(expr_pool.EmplaceObject<DoubleSqrtExpr>(expr));
+    } else {
+      expr = expr_pool.EmplaceObject<SqrtExpr>(expr);
+      if (expr->IsInt()) {
+        return AddCandidate(expr);
+      }
+    }
   }
   return false;
 }
-

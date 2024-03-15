@@ -12,6 +12,7 @@ void PrintUsage() {
     << "Options:\n"
     << "  -h, --help                          Show this help message\n"
     << "  -t, --trace                         Print trace of current search generation and the number of reachable values\n"
+    << "  -d, --deep_search                   Enable deep search mode, slower but will activate more search strategies\n"
     << "  --precision=double_value            Set precision for double's approximation integer and existence test (default: 1e-8)\n"
     << "  --value-max-limit=double_value      Set maximum limit for reachable values during search, larger values will be ignored (default: 1e12)\n"
     << "  --value-min-limit=double_value      Set minimum limit for reachable values during search, smaller values will be ignored (default: 1e-8)\n"
@@ -36,6 +37,7 @@ int main(int argc, char* argv[]) {
   }
 
   bool trace = cmdl[{ "-t", "--trace" }];
+  bool deep_search = cmdl[{ "-d", "--deep_search" }];
 
   double dvalue;
   if (cmdl("precision")) {
@@ -85,12 +87,12 @@ int main(int argc, char* argv[]) {
   }
 
   if (seed != 0) {
-    TchislaSolver ts(target, seed, trace ? &cout : nullptr);
+    TchislaSolver ts(target, seed, deep_search, trace ? &cout : nullptr);
     bool found = ts.Solve(search_depth > 0 ? search_depth : 20);
     cout << target << " = " << (found ? ts.Result() : "Not Found") << '\n' << endl;
   } else {
     for (int i = 1; i <= 9; ++i) {
-      TchislaSolver ts(target, i, trace ? &cout : nullptr);
+      TchislaSolver ts(target, i, deep_search, trace ? &cout : nullptr);
       bool found = ts.Solve(search_depth > 0 ? search_depth : 20);
       cout << target << " = " << (found ? ts.Result() : "Not Found") << '\n' << endl;
     }

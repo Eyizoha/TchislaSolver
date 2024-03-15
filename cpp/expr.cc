@@ -141,3 +141,38 @@ string SqrtExpr::ToString() const {
   }
   return ss.str();
 }
+
+DoubleSqrtExpr::DoubleSqrtExpr(const Expr* expr)
+  : Expr(sqrt(sqrt(expr->GetDouble()))), child_(expr) {
+}
+
+string DoubleSqrtExpr::ToString() const {
+  ostringstream ss;
+  if (IsInstanceOf<LiteralExpr>(child_) || IsInstanceOf<FactorialExpr>(child_)) {
+    ss << "√√" << child_->ToString();
+  } else {
+    ss << "√√(" << child_->ToString() << ')';
+  }
+  return ss.str();
+}
+
+MultiSqrtPowExpr::MultiSqrtPowExpr(int sqrt_times, const Expr* left, const Expr* right)
+  : Expr(pow(left->GetDouble(), right->GetInt() >> sqrt_times)),
+  sqrt_times_(sqrt_times), left_(left), right_(right) {
+}
+
+string MultiSqrtPowExpr::ToString() const {
+  ostringstream ss;
+  for (int i = 0; i < sqrt_times_; ++i) ss << "√";
+  if (IsInstanceOf<LiteralExpr>(left_) || IsInstanceOf<FactorialExpr>(left_)) {
+    ss << left_->ToString() << " ^ ";
+  } else {
+    ss << "(" << left_->ToString() << ") ^ ";
+  }
+  if (IsInstanceOf<BinaryExpr>(right_)) {
+    ss << '(' << right_->ToString() << ')';
+  } else {
+    ss << right_->ToString();
+  }
+  return ss.str();
+}

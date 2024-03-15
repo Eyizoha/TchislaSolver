@@ -104,3 +104,27 @@ public:
 private:
   const Expr* child_;
 };
+
+
+class DoubleSqrtExpr : public Expr {
+public:
+  DoubleSqrtExpr(const Expr* expr);
+
+  virtual std::string ToString() const;
+
+private:
+  const Expr* child_;
+};
+
+
+class MultiSqrtPowExpr : public Expr {
+public:
+  MultiSqrtPowExpr(int sqrt_times, const Expr* left, const Expr* right);
+
+  virtual std::string ToString() const;
+
+private:
+  int sqrt_times_;
+  const Expr* left_;
+  const Expr* right_;
+};

@@ -15,7 +15,8 @@ public:
   static int64_t FACTORIAL_LIMIT;
   static size_t MUILT_THREADS_THRESHOLD;
 
-  TchislaSolver(int64_t target, int64_t seed, std::ostream* trace_os = nullptr);
+  TchislaSolver(int64_t target, int64_t seed, bool deep_search = false,
+      std::ostream* trace_os = nullptr);
 
   bool Solve(int search_depth = 20);
 
@@ -29,6 +30,7 @@ private:
 
   const int64_t target_;
   const int64_t seed_;
+  const bool deep_search_;
   std::ostream* trace_os_ = nullptr;
 
   ConcurrentNumericSet<11> reachable_values_;
@@ -70,6 +72,7 @@ private:
     bool AddMultiplication(const Expr* expr1, const Expr* expr2);
     bool AddDivision(const Expr* expr1, const Expr* expr2);
     bool AddPower(const Expr* expr1, const Expr* expr2);
+    bool AddMultiSqrtPower(const Expr* expr1, const Expr* expr2);
     bool AddFactorial(const Expr* expr);
     bool AddSquareRoot(const Expr* expr);
   };
