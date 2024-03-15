@@ -162,7 +162,7 @@ bool TchislaSolver::GenerationCreator::AddPower(const Expr* expr1, const Expr* e
   }
   if (expr1->IsInt() && expr1->GetIntUnsafe() <= POWER_LIMIT) {
     RETURN_IF_TRUE(AddCandidate(expr_pool.EmplaceObject<PowExpr>(expr2, expr1)));
-    return AddMultiSqrtPower(expr1, expr2);
+    return AddMultiSqrtPower(expr2, expr1);
   }
   return false;
 }

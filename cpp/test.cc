@@ -10,7 +10,7 @@ int main() {
   auto loop_start = std::chrono::high_resolution_clock::now();
 
   for (int i = 1; i <= 9; ++i) {
-    TchislaSolver ts(target, i, &std::cout);
+    TchislaSolver ts(target, i, false, &std::cout);
     std::cout << target << " = " << (ts.Solve() ? ts.Result() : "Not Found") << std::endl << std::endl;
   }
 
