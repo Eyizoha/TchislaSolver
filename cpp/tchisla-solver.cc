@@ -116,7 +116,6 @@ bool TchislaSolver::GenerationCreator::AddCandidate(const Expr* expr) {
   }
   if (expr->GetDouble() < VALUE_MIN_LIMIT) return false;
   if (expr->GetDouble() > VALUE_MAX_LIMIT) return false;
-  if (!solver.deep_search_ && !expr->IsInt() && expr->GetDoubleUnsafe() > solver.target_) return false;
   if (solver.AddReachableValueIfNotExist(*expr)) {
     expr_pool.CommitLastObject();
     solver.current_generation_->push_back(part_id, expr);
@@ -158,10 +157,12 @@ bool TchislaSolver::GenerationCreator::AddDivision(const Expr* expr1, const Expr
 bool TchislaSolver::GenerationCreator::AddPower(const Expr* expr1, const Expr* expr2) {
   if (expr2->IsInt() && expr2->GetIntUnsafe() <= POWER_LIMIT) {
     RETURN_IF_TRUE(AddCandidate(expr_pool.EmplaceObject<PowExpr>(expr1, expr2)));
+    RETURN_IF_TRUE(AddCandidate(expr_pool.EmplaceObject<NegPowExpr>(expr1, expr2)));
     RETURN_IF_TRUE(AddMultiSqrtPower(expr1, expr2));
   }
   if (expr1->IsInt() && expr1->GetIntUnsafe() <= POWER_LIMIT) {
     RETURN_IF_TRUE(AddCandidate(expr_pool.EmplaceObject<PowExpr>(expr2, expr1)));
+    RETURN_IF_TRUE(AddCandidate(expr_pool.EmplaceObject<NegPowExpr>(expr2, expr1)));
     return AddMultiSqrtPower(expr2, expr1);
   }
   return false;
@@ -175,6 +176,7 @@ bool TchislaSolver::GenerationCreator::AddMultiSqrtPower(const Expr* expr1, cons
     const Expr* expr = expr_pool.EmplaceObject<MultiSqrtPowExpr>(sqrt_times++, expr1, expr2);
     if (solver.deep_search_ || expr->IsInt()) {
       RETURN_IF_TRUE(AddCandidate(expr));
+      RETURN_IF_TRUE(AddCandidate(expr_pool.EmplaceObject<NegMultiSqrtPowExpr>(sqrt_times, expr1, expr2)));
     }
   }
   return false;
@@ -189,7 +191,7 @@ bool TchislaSolver::GenerationCreator::AddFactorial(const Expr* expr) {
 
 bool TchislaSolver::GenerationCreator::AddSquareRoot(const Expr* expr) {
   if (expr->IsInt() && expr->GetIntUnsafe() > 0) {
-    if (solver.deep_search_) {
+    if (solver.deep_search_ || expr->GetIntUnsafe() == solver.seed_) {
       RETURN_IF_TRUE(AddCandidate(expr_pool.EmplaceObject<SqrtExpr>(expr)));
       return AddCandidate(expr_pool.EmplaceObject<DoubleSqrtExpr>(expr));
     } else {

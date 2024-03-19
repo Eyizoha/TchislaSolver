@@ -59,19 +59,29 @@ BinaryExpr::BinaryExpr(char oper, const Expr* left, const Expr* right, double va
   : Expr(value), oper_(oper), left_(left), right_(right) {
 }
 
-string BinaryExpr::ToString() const {
+string BinaryExpr::LeftToString() const {
   ostringstream ss;
   if (IsInstanceOf<BinaryExpr>(left_)) {
     ss << '(' << left_->ToString() << ')';
   } else {
     ss << left_->ToString();
   }
-  ss << ' ' << oper_ << ' ';
+  return ss.str();
+}
+
+string BinaryExpr::RightToString() const {
+  ostringstream ss;
   if (IsInstanceOf<BinaryExpr>(right_)) {
     ss << '(' << right_->ToString() << ')';
   } else {
     ss << right_->ToString();
   }
+  return ss.str();
+}
+
+string BinaryExpr::ToString() const {
+  ostringstream ss;
+  ss << LeftToString() << ' ' << oper_ << ' ' << RightToString();
   return ss.str();
 }
 
@@ -93,6 +103,46 @@ DivExpr::DivExpr(const Expr* left, const Expr* right)
 
 PowExpr::PowExpr(const Expr* left, const Expr* right)
   : BinaryExpr('^', left, right, pow(left->GetDouble(), right->GetDouble())) {
+}
+
+NegPowExpr::NegPowExpr(const Expr* left, const Expr* right)
+  : BinaryExpr('A', left, right, 1.0 / pow(left->GetDouble(), right->GetDouble())) {
+}
+
+string NegPowExpr::ToString() const {
+  ostringstream ss;
+  ss << LeftToString() << " ^-" << RightToString();
+  return ss.str();
+}
+
+MultiSqrtPowExpr::MultiSqrtPowExpr(int sqrt_times, const Expr* left, const Expr* right)
+  : BinaryExpr('^', left, right, pow(left->GetDouble(), right->GetInt() >> sqrt_times)),
+  sqrt_times_(sqrt_times) {
+}
+
+string MultiSqrtPowExpr::LeftToString() const {
+  ostringstream ss;
+  for (int i = 0; i < sqrt_times_; ++i) ss << "√";
+  ss << BinaryExpr::LeftToString();
+  return ss.str();
+}
+
+NegMultiSqrtPowExpr::NegMultiSqrtPowExpr(int sqrt_times, const Expr* left, const Expr* right)
+  : BinaryExpr('A', left, right, 1.0 / pow(left->GetDouble(), right->GetInt() >> sqrt_times)),
+  sqrt_times_(sqrt_times) {
+}
+
+string NegMultiSqrtPowExpr::LeftToString() const {
+  ostringstream ss;
+  for (int i = 0; i < sqrt_times_; ++i) ss << "√";
+  ss << BinaryExpr::LeftToString();
+  return ss.str();
+}
+
+string NegMultiSqrtPowExpr::ToString() const {
+  ostringstream ss;
+  ss << LeftToString() << " ^-" << RightToString();
+  return ss.str();
 }
 
 constexpr static int64_t FactorialRaw(int64_t n) {
@@ -152,27 +202,6 @@ string DoubleSqrtExpr::ToString() const {
     ss << "√√" << child_->ToString();
   } else {
     ss << "√√(" << child_->ToString() << ')';
-  }
-  return ss.str();
-}
-
-MultiSqrtPowExpr::MultiSqrtPowExpr(int sqrt_times, const Expr* left, const Expr* right)
-  : Expr(pow(left->GetDouble(), right->GetInt() >> sqrt_times)),
-  sqrt_times_(sqrt_times), left_(left), right_(right) {
-}
-
-string MultiSqrtPowExpr::ToString() const {
-  ostringstream ss;
-  for (int i = 0; i < sqrt_times_; ++i) ss << "√";
-  if (IsInstanceOf<LiteralExpr>(left_) || IsInstanceOf<FactorialExpr>(left_)) {
-    ss << left_->ToString() << " ^ ";
-  } else {
-    ss << "(" << left_->ToString() << ") ^ ";
-  }
-  if (IsInstanceOf<BinaryExpr>(right_)) {
-    ss << '(' << right_->ToString() << ')';
-  } else {
-    ss << right_->ToString();
   }
   return ss.str();
 }

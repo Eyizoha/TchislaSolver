@@ -43,10 +43,12 @@ class BinaryExpr : public Expr {
 public:
   BinaryExpr(char oper, const Expr* left, const Expr* right, double value);
 
+  virtual std::string LeftToString() const;
+  virtual std::string RightToString() const;
   virtual std::string ToString() const;
 
-private:
-  char oper_;
+protected:
+  const char oper_;
   const Expr* left_;
   const Expr* right_;
 };
@@ -82,6 +84,37 @@ public:
 };
 
 
+class NegPowExpr : public BinaryExpr {
+public:
+  NegPowExpr(const Expr* left, const Expr* right);
+
+  virtual std::string ToString() const;
+};
+
+
+class MultiSqrtPowExpr : public BinaryExpr {
+public:
+  MultiSqrtPowExpr(int sqrt_times, const Expr* left, const Expr* right);
+
+  virtual std::string LeftToString() const;
+
+private:
+  int sqrt_times_;
+};
+
+
+class NegMultiSqrtPowExpr : public BinaryExpr {
+public:
+  NegMultiSqrtPowExpr(int sqrt_times, const Expr* left, const Expr* right);
+
+  virtual std::string LeftToString() const;
+  virtual std::string ToString() const;
+
+private:
+  int sqrt_times_;
+};
+
+
 class FactorialExpr : public Expr {
 public:
   static int64_t Factorial(int64_t n);
@@ -114,17 +147,4 @@ public:
 
 private:
   const Expr* child_;
-};
-
-
-class MultiSqrtPowExpr : public Expr {
-public:
-  MultiSqrtPowExpr(int sqrt_times, const Expr* left, const Expr* right);
-
-  virtual std::string ToString() const;
-
-private:
-  int sqrt_times_;
-  const Expr* left_;
-  const Expr* right_;
 };
