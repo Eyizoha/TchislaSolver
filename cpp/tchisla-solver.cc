@@ -175,10 +175,11 @@ bool TchislaSolver::GenerationCreator::AddPower(const Expr* expr1, const Expr* e
 
 bool TchislaSolver::GenerationCreator::AddMultiSqrtPower(const Expr* expr1, const Expr* expr2) {
   int64_t power = expr2->GetIntUnsafe();
-  int sqrt_times = 1;
+  int sqrt_times = 0;
   while ((power & 1) == 0) {
     power >>= 1;
-    const Expr* expr = expr_pool.EmplaceObject<MultiSqrtPowExpr>(sqrt_times++, expr1, expr2);
+    ++sqrt_times;
+    const Expr* expr = expr_pool.EmplaceObject<MultiSqrtPowExpr>(sqrt_times, expr1, expr2);
     if (solver.search_mode_ > 0 || expr->IsInt()) {
       RETURN_IF_TRUE(AddCandidate(expr));
       RETURN_IF_TRUE(AddCandidate(expr_pool.EmplaceObject<NegMultiSqrtPowExpr>(sqrt_times, expr1, expr2)));

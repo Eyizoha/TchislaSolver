@@ -14,7 +14,7 @@ void PrintUsage() {
     << "  -t, --trace                         Print trace of current search generation and the number of reachable values\n"
     << "  -d, --deep_search                   Enable deep search mode, slow but will activate extra search strategies\n"
     << "  -dd, --deeper_search                Enable deeper search mode, slower but will activate all search strategies\n"
-    << "  --precision=double_value            Set precision for double's approximation integer and existence test (default: 1e-8)\n"
+    << "  --precision=double_value            Set precision for double's approximation integer and existence test (default: 1e-7)\n"
     << "  --value-max-limit=double_value      Set maximum limit for reachable values during search, larger values will be ignored (default: 1e12)\n"
     << "  --value-min-limit=double_value      Set minimum limit for reachable values during search, smaller values will be ignored (default: 1e-8)\n"
     << "  --power-limit=int_value             Set the maximum exponent value for power calculations (default: 40)\n"
