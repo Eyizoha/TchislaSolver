@@ -21,6 +21,7 @@ public:
   bool Solve(int search_depth = 20);
 
   std::string Result() const { return result_; }
+  size_t Generations() const { return generations_.size() + 1; }
 
 private:
   struct GenerationCreator;

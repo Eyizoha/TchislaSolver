@@ -94,7 +94,7 @@ SubExpr::SubExpr(const Expr* left, const Expr* right)
 }
 
 MulExpr::MulExpr(const Expr* left, const Expr* right)
-  : BinaryExpr('*', left, right, left->GetDouble()* right->GetDouble()) {
+  : BinaryExpr('*', left, right, left->GetDouble() * right->GetDouble()) {
 }
 
 DivExpr::DivExpr(const Expr* left, const Expr* right)

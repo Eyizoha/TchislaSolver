@@ -91,14 +91,24 @@ int main(int argc, char* argv[]) {
 
   if (seed != 0) {
     TchislaSolver ts(target, seed, search_mode, trace ? &cout : nullptr);
-    bool found = ts.Solve(search_depth > 0 ? search_depth : 20);
-    cout << target << " = " << (found ? ts.Result() : "Not Found") << '\n' << endl;
+    if (ts.Solve(search_depth > 0 ? search_depth : 20)) {
+      cout << target << '(' << ts.Generations() << ')' << " = " << ts.Result() << endl;
+    } else {
+      cout << "Not Found" << endl;
+    }
   } else {
+    size_t total = 0;
     for (int i = 1; i <= 9; ++i) {
       TchislaSolver ts(target, i, search_mode, trace ? &cout : nullptr);
-      bool found = ts.Solve(search_depth > 0 ? search_depth : 20);
-      cout << target << " = " << (found ? ts.Result() : "Not Found") << '\n' << endl;
+      if (ts.Solve(search_depth > 0 ? search_depth : 20)) {
+        total += ts.Generations();
+        cout << target << '(' << ts.Generations() << ')' << " = " << ts.Result();
+      } else {
+        cout << "Not Found";
+      }
+      cout << '\n' << endl;
     }
+    cout << "Total digits used: " << total << endl;
   }
 
   return 0;
