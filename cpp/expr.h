@@ -115,6 +115,14 @@ private:
 };
 
 
+class SqrtMulExpr : public BinaryExpr {
+public:
+  SqrtMulExpr(const Expr* left, const Expr* right);
+
+  virtual std::string RightToString() const;
+};
+
+
 class FactorialExpr : public Expr {
 public:
   static int64_t Factorial(int64_t n);

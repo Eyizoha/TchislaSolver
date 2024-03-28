@@ -145,7 +145,18 @@ bool TchislaSolver::GenerationCreator::AddSubtraction(const Expr* expr1, const E
 }
 
 bool TchislaSolver::GenerationCreator::AddMultiplication(const Expr* expr1, const Expr* expr2) {
-  return AddCandidate(expr_pool.EmplaceObject<MulExpr>(expr1, expr2));
+  RETURN_IF_TRUE(AddCandidate(expr_pool.EmplaceObject<MulExpr>(expr1, expr2)));
+  if (solver.search_mode_ > 1) {
+    if (!expr1->IsInt()) {
+      const Expr* expr = expr_pool.EmplaceObject<SqrtMulExpr>(expr2, expr1);
+      if (expr->IsInt()) RETURN_IF_TRUE(AddCandidate(expr));
+    }
+    if (!expr2->IsInt()) {
+      const Expr* expr = expr_pool.EmplaceObject<SqrtMulExpr>(expr1, expr2);
+      if (expr->IsInt()) RETURN_IF_TRUE(AddCandidate(expr));
+    }
+  }
+  return false;
 }
 
 bool TchislaSolver::GenerationCreator::AddDivision(const Expr* expr1, const Expr* expr2) {

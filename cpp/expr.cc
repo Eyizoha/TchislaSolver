@@ -145,6 +145,15 @@ string NegMultiSqrtPowExpr::ToString() const {
   return ss.str();
 }
 
+SqrtMulExpr::SqrtMulExpr(const Expr* left, const Expr* right)
+  : BinaryExpr('*', left, right, left->GetDouble() * sqrt(right->GetDouble())) { }
+
+string SqrtMulExpr::RightToString() const {
+  ostringstream ss;
+  ss << "√(" << BinaryExpr::RightToString() << ')';
+  return ss.str();
+}
+
 constexpr static int64_t FactorialRaw(int64_t n) {
   int64_t res = 1;
   while (n > 0) res *= n--;
